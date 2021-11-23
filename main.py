@@ -5,14 +5,14 @@ from model.Pokemon import Pokemon
 class PorterMon:
 
     @staticmethod
-    def get_pokemon(id_pokedex: int, ) -> Pokemon:
+    def busca_pokemon_pokeapi(id_pokedex: int, ) -> Pokemon:
         resultado = get('https://pokeapi.co/api/v2/pokemon/' + str(id_pokedex))
         if resultado.status_code != 200:
             raise Exception(resultado.text)
         return Pokemon(resultado.json())
 
     def run(self, ):
-        lista_de_pokemons = [self.get_pokemon(i) for i in range(1, 21)]
+        lista_de_pokemons = [self.busca_pokemon_pokeapi(i) for i in range(1, 21)]
         print(lista_de_pokemons)
 
 
