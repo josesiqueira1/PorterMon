@@ -7,7 +7,7 @@ database = PokemonDb()
 
 class Pokemon:
 
-    def __init__(self, props: dict):
+    def __init__(self, props: dict, ):
         self.id = props['id']
 
         pokemon = self.busca_pokemon_por_id()
@@ -29,8 +29,8 @@ class Pokemon:
             self.salvar_no_banco()
 
     @staticmethod
-    def parse_list(param):
-        return param.strip('][').split(',')
+    def parse_list(lista: str, ):
+        return lista.strip('][').split(',')
 
     @property
     def habilidades(self, ) -> List[str]:
@@ -49,7 +49,7 @@ class Pokemon:
         self._tipo = lista
 
     @property
-    def id(self) -> int:
+    def id(self, ) -> int:
         return self._id
 
     @id.setter
@@ -57,7 +57,7 @@ class Pokemon:
         self._id = pokedex_id
 
     @property
-    def nome(self) -> str:
+    def nome(self, ) -> str:
         return self._nome
 
     @nome.setter
@@ -65,7 +65,7 @@ class Pokemon:
         self._nome = nome
 
     @property
-    def peso(self) -> int:
+    def peso(self, ) -> int:
         return self._peso
 
     @peso.setter
@@ -74,12 +74,13 @@ class Pokemon:
 
     def salvar_no_banco(self, ):
         database.insert(['id', 'nome', 'url', 'peso', 'habilidades', 'tipo', 'sprite'],
-                        f"{self.id}, '{self.nome}', '{self.url}', {self.peso}, '[{','.join(self.habilidades)}]', '[{','.join(self.tipo)}]', '{self.sprite}'")
+                        f"{self.id}, '{self.nome}', '{self.url}', {self.peso}, '[{','.join(self.habilidades)}]', "
+                        f"'[{','.join(self.tipo)}]', '{self.sprite}'")
 
     def busca_pokemon_por_id(self, ):
         return database.busca_por_id(str(self.id))
 
-    def __str__(self):
+    def __str__(self, ):
         return f'Número da Pokedex: {self.id} \n' \
                f'Nome: {self.nome} \n' \
                f'URL: {self.url} \n' \
