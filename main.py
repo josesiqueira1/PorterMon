@@ -12,7 +12,7 @@ class PorterMon:
         return Pokemon(resultado.json())
 
     def run(self, ):
-        lista_de_pokemons = [self.get_pokemon(i) for i in range(20)]
+        lista_de_pokemons = [self.get_pokemon(i) for i in range(1, 21)]
         print(lista_de_pokemons)
 
 
