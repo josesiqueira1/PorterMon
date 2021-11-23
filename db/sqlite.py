@@ -15,15 +15,14 @@ class PokemonDb:
         try:
             conn = self.nova_conexao()
 
-            insert_sql = f"""insert into pokemons({', '.join(campos)}) """ \
-                         f"""values ({values})"""
-            conn.execute(insert_sql)
+            conn.execute(f"""insert into pokemons({', '.join(campos)}) """
+                         f"""values ({values})""")
 
             conn.commit()
         except Exception as e:
             raise e
 
-    def select(self, sql: str):
+    def select(self, sql: str, ):
         try:
             conn = self.nova_conexao()
 
@@ -35,5 +34,25 @@ class PokemonDb:
         except Exception as e:
             raise e
 
-    def busca_por_id(self, id_query: str):
+    def busca_por_id(self, id_query: str, ):
         return self.select(f'select * from pokemons where id = {id_query}')
+
+    def delete(self, id_delete: str, ):
+        try:
+            conn = self.nova_conexao()
+
+            conn.execute(f'delete from pokemons where id = {id_delete}')
+
+            conn.commit()
+        except Exception as e:
+            raise e
+
+    def truncate(self, ):
+        try:
+            conn = self.nova_conexao()
+
+            conn.execute(f'truncate table pokemons')
+
+            conn.commit()
+        except Exception as e:
+            raise e
