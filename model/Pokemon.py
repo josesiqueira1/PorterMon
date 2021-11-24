@@ -1,5 +1,7 @@
 from typing import List
 
+from requests import get
+
 from db.sqlite import PokemonDb
 
 database = PokemonDb()
@@ -7,8 +9,8 @@ database = PokemonDb()
 
 class Pokemon:
 
-    def __init__(self, props: dict, ):
-        self.id = props['id']
+    def __init__(self, id_pokedex: int, ):
+        self.id = id_pokedex
 
         pokemon = self.busca_pokemon_por_id()
         if len(pokemon) == 1:
@@ -17,14 +19,13 @@ class Pokemon:
             self.peso = pokemon[0][3]
             self.habilidades = self.parse_list(pokemon[0][4])
             self.tipo = self.parse_list(pokemon[0][5])
-            self.sprite = pokemon[0][6]
         else:
+            props: dict = self.busca_pokemon_pokeapi(id_pokedex)
             self.nome = props['name']
             self.url = 'https://pokeapi.co/api/v2/pokemon/' + str(props['id'])
             self.peso = props['weight']
             self.habilidades = [x["ability"]["name"] for x in props['abilities']]
             self.tipo = [x["type"]["name"] for x in props['types']]
-            self.sprite = props['sprites']['front_default']
 
             self.salvar_no_banco()
 
@@ -32,17 +33,24 @@ class Pokemon:
     def parse_list(lista: str, ):
         return lista.strip('][').split(',')
 
+    @staticmethod
+    def busca_pokemon_pokeapi(id_pokedex: int, ):
+        resultado = get('https://pokeapi.co/api/v2/pokemon/' + str(id_pokedex))
+        if resultado.status_code != 200:
+            raise Exception(resultado.text)
+        return resultado.json()
+
     @property
-    def habilidades(self, ) -> List[str]:
-        return self._habilidades
+    def habilidades(self, ) -> str:
+        return ', '.join(self._habilidades)
 
     @habilidades.setter
     def habilidades(self, lista: List[str], ):
         self._habilidades = lista
 
     @property
-    def tipo(self, ) -> List[str]:
-        return self._tipo
+    def tipo(self, ) -> str:
+        return ', '.join(self._tipo)
 
     @tipo.setter
     def tipo(self, lista: List[str], ):
@@ -73,9 +81,9 @@ class Pokemon:
         self._peso = peso
 
     def salvar_no_banco(self, ):
-        database.insert(['id', 'nome', 'url', 'peso', 'habilidades', 'tipo', 'sprite'],
+        database.insert(['id', 'nome', 'url', 'peso', 'habilidades', 'tipo'],
                         f"{self.id}, '{self.nome}', '{self.url}', {self.peso}, '[{','.join(self.habilidades)}]', "
-                        f"'[{','.join(self.tipo)}]', '{self.sprite}'")
+                        f"'[{','.join(self.tipo)}]'")
 
     def busca_pokemon_por_id(self, ):
         return database.busca_por_id(str(self.id))
