@@ -5,11 +5,11 @@ from threading import Lock
 
 from PyQt5 import QtWidgets, QtGui, QtCore
 
-from helper.DialogsLimparCache import DialogLimparTodoCache, DialogLimparCachePorID
 from helper.DialogBuscaPorID import DialogBuscaPorID
+from helper.DialogsLimparCache import DialogLimparTodoCache, DialogLimparCachePorID
 from model.Pokemon import Pokemon
 
-PROPRIEDADE_VISIVEIS = ['Nome', 'URL', 'Peso', 'Habilidades', 'Tipo']
+PROPRIEDADE_VISIVEIS = ['Nome', 'URL', 'Peso', 'Habilidades', 'Tipo', ]
 
 
 class Tasks(QtCore.QObject):
@@ -24,7 +24,7 @@ class Tasks(QtCore.QObject):
 
 class PorterMon(QtWidgets.QApplication):
 
-    def __init__(self, argv):
+    def __init__(self, argv, ):
         super(PorterMon, self).__init__(argv)
         self.main_window, self.icon, self.pokemons = self.set_layout()
 
@@ -82,26 +82,26 @@ class PorterMon(QtWidgets.QApplication):
         main_window.setStatusBar(statusbar)
         statusbar.setFixedHeight(30)
 
+    @staticmethod
+    def novo_botao_inferior(texto: str, linha: int, coluna: int, layout: QtWidgets.QGridLayout, ):
+        botao = QtWidgets.QPushButton()
+        botao.setText(texto)
+        layout.addWidget(botao, linha, coluna)
+
+        return botao
+
     def monta_botoes_inferiores(self, grid_layout: QtWidgets.QGridLayout, pokemons: QtWidgets.QComboBox, ):
-        botao_primeiros_20 = QtWidgets.QPushButton()
-        botao_primeiros_20.setText('Carregar 20 primeiros pokemons')
+        botao_primeiros_20 = self.novo_botao_inferior('Carregar 20 primeiros pokemons', 0, 0, grid_layout)
         botao_primeiros_20.clicked.connect(partial(self.carregar_20_pokemons, pokemons))
-        grid_layout.addWidget(botao_primeiros_20, 0, 0)
 
-        botao_carregar_por_id = QtWidgets.QPushButton()
-        botao_carregar_por_id.setText('Carregar pokemon pelo ID')
+        botao_carregar_por_id = self.novo_botao_inferior('Carregar pokemon pelo ID', 0, 1, grid_layout)
         botao_carregar_por_id.clicked.connect(lambda: DialogBuscaPorID(self.icon, self.pokemons))
-        grid_layout.addWidget(botao_carregar_por_id, 0, 1)
 
-        botao_limpar_todo_cache = QtWidgets.QPushButton()
-        botao_limpar_todo_cache.setText('Limpar todo o cache')
+        botao_limpar_todo_cache = self.novo_botao_inferior('Limpar todo o cache', 1, 0, grid_layout)
         botao_limpar_todo_cache.clicked.connect(lambda: DialogLimparTodoCache(self.icon, self.pokemons))
-        grid_layout.addWidget(botao_limpar_todo_cache, 1, 0)
 
-        botao_limpar_cache_por_id = QtWidgets.QPushButton()
-        botao_limpar_cache_por_id.setText('Limpar pokemon do cache pelo ID')
+        botao_limpar_cache_por_id = self.novo_botao_inferior('Limpar pokemon do cache pelo ID', 1, 1, grid_layout)
         botao_limpar_cache_por_id.clicked.connect(lambda: DialogLimparCachePorID(self.icon, self.pokemons))
-        grid_layout.addWidget(botao_limpar_cache_por_id, 1, 1)
 
     @staticmethod
     def novo_label(layout: QtWidgets.QGridLayout, row: int, texto: str, ):
@@ -123,11 +123,11 @@ class PorterMon(QtWidgets.QApplication):
         for prop in PROPRIEDADE_VISIVEIS:
             prop_lower = prop.lower()
             valor = em_branco or getattr(pokemon, prop_lower)
-            if prop_lower in ['habilidades', 'tipo']:
+            if prop_lower in ['habilidades', 'tipo', ]:
                 valor = ', '.join(valor or [])
             getattr(self, 'texto_' + prop_lower).setText(str(valor))
 
-    def atualizar_barra_de_status(self, text: str):
+    def atualizar_barra_de_status(self, text: str, ):
         with self.redrawLock:
             self.main_window.statusBar().showMessage(text, 3000)
 
