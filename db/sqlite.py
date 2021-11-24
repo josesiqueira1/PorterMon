@@ -51,7 +51,7 @@ class PokemonDb:
         try:
             conn = self.nova_conexao()
 
-            conn.execute(f'truncate table pokemons')
+            conn.execute('delete from pokemons')
 
             conn.commit()
         except Exception as e:
