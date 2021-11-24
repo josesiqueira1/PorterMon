@@ -5,6 +5,8 @@ from threading import Lock
 
 from PyQt5 import QtWidgets, QtGui, QtCore
 
+from helper.DialogsLimparCache import DialogLimparTodoCache, DialogLimparCachePorID
+from helper.DialogBuscaPorID import DialogBuscaPorID
 from model.Pokemon import Pokemon
 
 PROPRIEDADE_VISIVEIS = ['Nome', 'URL', 'Peso', 'Habilidades', 'Tipo']
@@ -24,11 +26,10 @@ class PorterMon(QtWidgets.QApplication):
 
     def __init__(self, argv):
         super(PorterMon, self).__init__(argv)
-        self.main_window = self.set_layout()
+        self.main_window, self.icon, self.pokemons = self.set_layout()
 
         tasks = Tasks()
-        tasks.sinalstatusbar.connect(self.attstatusbar)
-        self.tasks = tasks
+        tasks.sinalstatusbar.connect(self.atualizar_barra_de_status)
 
         self.redrawLock = Lock()
         self.main_window.resize(400, 300)
@@ -39,20 +40,20 @@ class PorterMon(QtWidgets.QApplication):
         main_window.show()
 
         scriptdir = path.dirname(path.realpath(__file__))
-        main_window.setWindowIcon(QtGui.QIcon(scriptdir + path.sep + 'favicon.png'))
+        icon = QtGui.QIcon(scriptdir + path.sep + 'favicon.png')
+
+        main_window.setWindowIcon(icon)
 
         main_window.setWindowTitle("PorterMon")
 
-        statusbar = QtWidgets.QStatusBar()
-        statusbar.setObjectName("statusbar")
-        main_window.setStatusBar(statusbar)
-        statusbar.setFixedHeight(30)
+        self.monta_barra_de_status(main_window)
 
         layout = QtWidgets.QGridLayout()
 
         self.novo_label(layout, 0, 'Lista de pokemons')
 
         pokemons = QtWidgets.QComboBox()
+        pokemons.setInsertPolicy(QtWidgets.QComboBox.InsertAlphabetically)
         pokemons.addItem('')
         pokemons.currentIndexChanged.connect(partial(self.handle_change_pokemon, pokemons, ))
         layout.addWidget(pokemons, 1, 0)
@@ -66,27 +67,48 @@ class PorterMon(QtWidgets.QApplication):
         grid_layout_botoes = QtWidgets.QGridLayout()
         layout.addLayout(grid_layout_botoes, 4, 0)
 
-        botao_20 = QtWidgets.QPushButton()
-        botao_20.setText('Carregar 20 primeiros pokemons')
-        botao_20.clicked.connect(partial(self.carregar_20_pokemons, pokemons))
-        grid_layout_botoes.addWidget(botao_20, 0, 0)
-
-        botao = QtWidgets.QPushButton()
-        botao.setText('Carregar pokemon com id')
-        grid_layout_botoes.addWidget(botao, 0, 1)
+        self.monta_botoes_inferiores(grid_layout_botoes, pokemons)
 
         centralwidget = QtWidgets.QWidget()
         centralwidget.setLayout(layout)
         main_window.setCentralWidget(centralwidget)
 
-        return main_window
+        return main_window, icon, pokemons
 
     @staticmethod
-    def novo_label(layout: QtWidgets.QGridLayout, row: int, texto: str):
+    def monta_barra_de_status(main_window: QtWidgets.QMainWindow, ):
+        statusbar = QtWidgets.QStatusBar()
+        statusbar.setObjectName("statusbar")
+        main_window.setStatusBar(statusbar)
+        statusbar.setFixedHeight(30)
+
+    def monta_botoes_inferiores(self, grid_layout: QtWidgets.QGridLayout, pokemons: QtWidgets.QComboBox, ):
+        botao_primeiros_20 = QtWidgets.QPushButton()
+        botao_primeiros_20.setText('Carregar 20 primeiros pokemons')
+        botao_primeiros_20.clicked.connect(partial(self.carregar_20_pokemons, pokemons))
+        grid_layout.addWidget(botao_primeiros_20, 0, 0)
+
+        botao_carregar_por_id = QtWidgets.QPushButton()
+        botao_carregar_por_id.setText('Carregar pokemon pelo ID')
+        botao_carregar_por_id.clicked.connect(lambda: DialogBuscaPorID(self.icon, self.pokemons))
+        grid_layout.addWidget(botao_carregar_por_id, 0, 1)
+
+        botao_limpar_todo_cache = QtWidgets.QPushButton()
+        botao_limpar_todo_cache.setText('Limpar todo o cache')
+        botao_limpar_todo_cache.clicked.connect(lambda: DialogLimparTodoCache(self.icon, self.pokemons))
+        grid_layout.addWidget(botao_limpar_todo_cache, 1, 0)
+
+        botao_limpar_cache_por_id = QtWidgets.QPushButton()
+        botao_limpar_cache_por_id.setText('Limpar pokemon do cache pelo ID')
+        botao_limpar_cache_por_id.clicked.connect(lambda: DialogLimparCachePorID(self.icon, self.pokemons))
+        grid_layout.addWidget(botao_limpar_cache_por_id, 1, 1)
+
+    @staticmethod
+    def novo_label(layout: QtWidgets.QGridLayout, row: int, texto: str, ):
         lb = QtWidgets.QLabel(texto)
         layout.addWidget(lb, row, 0)
 
-    def adicionar_campos_form(self, form_layout: QtWidgets.QFormLayout):
+    def adicionar_campos_form(self, form_layout: QtWidgets.QFormLayout, ):
         for propriedade in PROPRIEDADE_VISIVEIS:
             line = QtWidgets.QLineEdit(' ')
             line.setReadOnly(True)
@@ -100,19 +122,20 @@ class PorterMon(QtWidgets.QApplication):
             em_branco = ' '
         for prop in PROPRIEDADE_VISIVEIS:
             prop_lower = prop.lower()
-            getattr(self, 'texto_' + prop_lower).setText(str(em_branco or getattr(pokemon, prop_lower)))
+            valor = em_branco or getattr(pokemon, prop_lower)
+            if prop_lower in ['habilidades', 'tipo']:
+                valor = ', '.join(valor or [])
+            getattr(self, 'texto_' + prop_lower).setText(str(valor))
 
-    def attstatusbar(self, text: str):
+    def atualizar_barra_de_status(self, text: str):
         with self.redrawLock:
             self.main_window.statusBar().showMessage(text, 3000)
 
-    def carregar_20_pokemons(self, combo_box: QtWidgets.QComboBox):
+    def carregar_20_pokemons(self, combo_box: QtWidgets.QComboBox, ):
         for i in range(1, 21):
             pokemon = Pokemon(i)
-            if combo_box.itemData(i):
-                continue
-            combo_box.insertItem(pokemon.id, str(pokemon.id) + ' - ' + pokemon.nome, userData=pokemon)
-        self.attstatusbar('Pokemons carregados')
+            pokemon.inserir_na_lista(combo_box)
+        self.atualizar_barra_de_status('Pokemons carregados')
 
 
 if __name__ == '__main__':
