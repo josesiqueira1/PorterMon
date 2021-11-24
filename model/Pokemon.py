@@ -1,5 +1,6 @@
 from typing import List
 
+from PyQt5 import QtWidgets
 from requests import get
 
 from db.sqlite import PokemonDb
@@ -11,6 +12,7 @@ class Pokemon:
 
     def __init__(self, id_pokedex: int, ):
         self.id = id_pokedex
+        self.identificacao = ''
 
         pokemon = self.busca_pokemon_por_id()
         if len(pokemon) == 1:
@@ -41,16 +43,16 @@ class Pokemon:
         return resultado.json()
 
     @property
-    def habilidades(self, ) -> str:
-        return ', '.join(self._habilidades)
+    def habilidades(self, ) -> List[str]:
+        return self._habilidades
 
     @habilidades.setter
     def habilidades(self, lista: List[str], ):
         self._habilidades = lista
 
     @property
-    def tipo(self, ) -> str:
-        return ', '.join(self._tipo)
+    def tipo(self, ) -> List[str]:
+        return self._tipo
 
     @tipo.setter
     def tipo(self, lista: List[str], ):
@@ -70,6 +72,7 @@ class Pokemon:
 
     @nome.setter
     def nome(self, nome: str, ):
+        self.identificacao = str(self.id) + ' - ' + nome
         self._nome = nome
 
     @property
@@ -79,6 +82,14 @@ class Pokemon:
     @peso.setter
     def peso(self, peso: int, ):
         self._peso = peso
+
+    @property
+    def identificacao(self, ) -> str:
+        return self._identificacao
+
+    @identificacao.setter
+    def identificacao(self, identificacao: str, ):
+        self._identificacao = identificacao
 
     def salvar_no_banco(self, ):
         database.insert(['id', 'nome', 'url', 'peso', 'habilidades', 'tipo'],
@@ -95,3 +106,8 @@ class Pokemon:
                f'Peso: {self.peso} \n' \
                f'Habilidades: {", ".join(self.habilidades)} \n' \
                f'Tipo: {", ".join(self.tipo)}'
+
+    def inserir_na_lista(self, combo_box: QtWidgets.QComboBox, ):
+        if combo_box.findText(self.identificacao) > 0:
+            return
+        combo_box.insertItem(self.id, self.identificacao, userData=self)
